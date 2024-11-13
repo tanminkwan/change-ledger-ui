@@ -1,5 +1,77 @@
 # scratch_pjt
+WebRTC 연결 과정에서의 SDP 교환 절차를 포함한 상세한 흐름을 Mermaid 시퀀스 다이어그램으로 정리해드리겠습니다.
 
+```mermaid
+sequenceDiagram
+    participant ClientA
+    participant WebSocketServer
+    participant ClientB
+
+    %% 클라이언트들이 WebSocket 서버에 연결
+    ClientA->>WebSocketServer: WebSocket 연결 수립
+    ClientB->>WebSocketServer: WebSocket 연결 수립
+
+    %% ClientA에서 Offer 생성 및 전송
+    Note over ClientA: "Create Offer" 버튼 클릭
+    ClientA->>ClientA: PeerConnection 생성
+    ClientA->>ClientA: DataChannel 생성
+    ClientA->>ClientA: Offer SDP 생성
+    ClientA->>ClientA: Local Description에 Offer 설정
+    ClientA->>WebSocketServer: Offer SDP 전송
+
+    %% WebSocket 서버가 Offer를 ClientB에게 전달
+    WebSocketServer->>ClientB: Offer SDP 전달
+
+    %% ClientB에서 Answer 생성 및 전송
+    ClientB->>ClientB: PeerConnection 생성
+    ClientB->>ClientB: Remote Description에 Offer 설정
+    ClientB->>ClientB: Answer SDP 생성
+    ClientB->>ClientB: Local Description에 Answer 설정
+    ClientB->>WebSocketServer: Answer SDP 전송
+
+    %% WebSocket 서버가 Answer를 ClientA에게 전달
+    WebSocketServer->>ClientA: Answer SDP 전달
+
+    %% ClientA에서 Answer 수신 및 설정
+    ClientA->>ClientA: Remote Description에 Answer 설정
+
+    %% ICE Candidate 교환
+    loop ICE Candidate 교환
+        ClientA->>WebSocketServer: ICE Candidate 전송
+        WebSocketServer->>ClientB: ICE Candidate 전달
+        ClientB->>ClientB: ICE Candidate 추가
+
+        ClientB->>WebSocketServer: ICE Candidate 전송
+        WebSocketServer->>ClientA: ICE Candidate 전달
+        ClientA->>ClientA: ICE Candidate 추가
+    end
+
+    %% DataChannel을 통한 메시지 송수신
+    Note over ClientA,ClientB: DataChannel 연결 수립 완료
+    ClientA->>ClientB: DataChannel을 통해 메시지 전송
+    ClientB->>ClientA: DataChannel을 통해 메시지 전송
+```
+
+위 다이어그램은 WebRTC를 이용한 텍스트 채팅 앱에서의 상세한 절차를 나타냅니다. 각 단계는 다음과 같습니다:
+
+1. **WebSocket 연결 수립**: ClientA와 ClientB 모두 WebSocket 서버에 연결합니다.
+2. **Offer 생성 및 전송 (ClientA)**:
+   - "Create Offer" 버튼을 클릭하여 PeerConnection과 DataChannel을 생성합니다.
+   - Offer SDP를 생성하고 Local Description에 설정합니다.
+   - WebSocket 서버를 통해 Offer SDP를 ClientB에게 전송합니다.
+3. **Offer 수신 및 Answer 생성 (ClientB)**:
+   - Offer SDP를 수신하고 Remote Description에 설정합니다.
+   - PeerConnection을 생성하고 Answer SDP를 생성합니다.
+   - Local Description에 Answer SDP를 설정하고 WebSocket 서버를 통해 ClientA에게 전송합니다.
+4. **Answer 수신 및 설정 (ClientA)**:
+   - Answer SDP를 수신하고 Remote Description에 설정합니다.
+5. **ICE Candidate 교환**:
+   - 양측 클라이언트는 ICE Candidate를 생성할 때마다 WebSocket 서버를 통해 상대방에게 전달합니다.
+   - 수신한 ICE Candidate를 PeerConnection에 추가합니다.
+6. **DataChannel을 통한 통신 시작**:
+   - 모든 신호 교환이 완료되면 DataChannel이 열리고, 실시간으로 메시지를 주고받을 수 있습니다.
+
+이러한 절차를 통해 두 클라이언트는 직접 통신할 수 있는 WebRTC 연결을 설정하고, 텍스트 채팅을 구현하게 됩니다.
 # change-ledger-ui
 
 Flutter 앱과 WebSocket 서버를 빌드하고 실행하는 방법 및 테스트 절차를 정리해드리겠습니다.
